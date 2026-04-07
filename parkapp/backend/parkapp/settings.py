@@ -25,7 +25,7 @@ INSTALLED_APPS = [
     'apps.users',
     'apps.parking',
     'apps.reservations',
-    'apps.payments',
+    #'apps.payments',
     'apps.reviews',
     'apps.reports',
 ]
@@ -129,4 +129,15 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+}
+
+
+from celery.schedules import crontab
+
+# Configuração do Celery Beat (Agendador de Tarefas)
+CELERY_BEAT_SCHEDULE = {
+    'update-parking-data-every-5-minutes': {
+        'task': 'apps.parking.tasks.sync_parking_availability',
+        'schedule': crontab(minute='*/5'), # Roda a cada 5 minutos
+    },
 }

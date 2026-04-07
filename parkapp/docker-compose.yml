@@ -85,6 +85,25 @@ services:
       redis:
         condition: service_healthy
 
+# =============================================
+  # SCHEDULER - Celery Beat (Agendador de tarefas)
+  # =============================================
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: parkapp_celery_beat
+    env_file: .env
+    command: celery -A parkapp beat -l info
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+        
 volumes:
   postgres_data:
   redis_data:
