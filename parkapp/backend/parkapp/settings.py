@@ -138,6 +138,6 @@ from celery.schedules import crontab
 CELERY_BEAT_SCHEDULE = {
     'update-parking-data-every-5-minutes': {
         'task': 'apps.parking.tasks.sync_parking_availability',
-        'schedule': crontab(minute='*/5'), # Roda a cada 5 minutos
+        'schedule': crontab(minute='*/3'), # Roda a cada 3 minutos
     },
 }
