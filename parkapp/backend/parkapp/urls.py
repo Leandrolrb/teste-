@@ -17,6 +17,7 @@ def api_root(request):
 urlpatterns = [
     path('', api_root),
     path('admin/', admin.site.urls),
+    path('api/parking/', include('apps.parking.urls')),
     # Adicione as rotas dos apps aqui:
     # path('api/users/', include('apps.users.urls')),
     # path('api/parking/', include('apps.parking.urls')),
