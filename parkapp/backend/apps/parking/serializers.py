@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Parking
+from .models import Booking
 
 class ParkingGeoJSONSerializer(serializers.ModelSerializer):
     """
@@ -30,3 +31,12 @@ class ParkingGeoJSONSerializer(serializers.ModelSerializer):
             "status": obj.status,
             "last_sensor_update": obj.last_sensor_update
         }
+
+class BookingSerializer(serializers.ModelSerializer):
+    # Vamos trazer o nome do estacionamento para facilitar pro frontend
+    parking_name = serializers.CharField(source='parking.name', read_only=True)
+    
+    class Meta:
+        model = Booking
+        fields = ['id', 'user', 'parking', 'parking_name', 'vehicle', 'status', 'start_time']
+        read_only_fields = ['status', 'start_time', 'end_time', 'price_paid']

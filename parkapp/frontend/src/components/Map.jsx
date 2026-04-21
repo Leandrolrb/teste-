@@ -1,79 +1,78 @@
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
+import React, { useEffect } from 'react';
+// IMPORTAMOS O CircleMarker AQUI
+import { MapContainer, TileLayer, GeoJSON, useMap, CircleMarker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// 1. Nossa regra de negócio de cores
 const getColor = (available, total) => {
-  if (total === 0) return "#ff4d4d"; // Evita divisão por zero
+  if (total === 0) return "#ff4d4d";
   const percentage = (available / total) * 100;
-  if (percentage === 0) return "#ff4d4d"; // Vermelho (Lotado)
-  if (percentage <= 20) return "#ffcc00"; // Amarelo (Quase lotado)
-  return "#2ecc71"; // Verde (Tranquilo)
+  if (percentage === 0) return "#ff4d4d";
+  if (percentage <= 20) return "#ffcc00";
+  return "#2ecc71";
 };
 
-// 2. O componente agora recebe a função 'onMarkerClick' do MapPage
-export default function ParkingMap({ onMarkerClick }) {
-  const [parkingData, setParkingData] = useState(null);
-
-  // Busca os dados da nossa API Django
+function MapController({ center }) {
+  const map = useMap();
   useEffect(() => {
-    fetch('/api/parking/')
-      .then(response => response.json())
-      .then(data => {
-        setParkingData(data);
-      })
-      .catch(error => console.error("Erro ao buscar vagas do Django:", error));
-  }, []);
+    if (center) {
+      map.flyTo(center, 14, { animate: true, duration: 1.5 });
+    }
+  }, [center, map]);
+  return null;
+}
 
-  // 3. A nova interação: Sem Popup, apenas o gatilho da gaveta
+// RECEBEMOS O userLocation NAS PROPS AQUI
+export default function ParkingMap({ parkingData, onMarkerClick, center, userLocation }) {
   const onEachFeature = (feature, layer) => {
     layer.on('click', () => {
-      // Quando o pino é clicado, enviamos os dados da vaga para a página principal
       if (onMarkerClick) {
-        onMarkerClick(feature.properties);
+        onMarkerClick({ 
+          id: feature.id || feature.properties.id, 
+          ...feature.properties 
+        });
       }
     });
   };
 
-  // 4. Desenhando os pinos coloridos no lugar do marcador padrão
   const pointToLayer = (feature, latlng) => {
     const { available_spots, total_capacity } = feature.properties;
     const color = getColor(available_spots, total_capacity);
-    
     return L.circleMarker(latlng, {
-      radius: 10,
-      fillColor: color,
-      color: "#ffffff",
-      weight: 2,
-      opacity: 1,
-      fillOpacity: 0.9
+      radius: 10, fillColor: color, color: "#ffffff", weight: 2, opacity: 1, fillOpacity: 0.9
     });
   };
 
   return (
-    <MapContainer 
-      center={[-15.6014, -56.0966]} // Focado em Cuiabá
-      zoom={13} 
-      style={{ height: '100%', width: '100%' }}
-      zoomControl={false} // Esconde os botões de +/- para ficar "cara de app"
-    >
+    <MapContainer center={[-15.6014, -56.0966]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+      <MapController center={center} />
       
-      {/* O "Chão" do mapa cinza estilo Waze (Esri Gray Canvas) */}
       <TileLayer
-        attribution='Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
+        attribution='Tiles &copy; Esri'
         url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
       />
-
-      {/* Renderiza os dados do Django usando nossa nova lógica */}
       {parkingData && (
         <GeoJSON 
+          key={JSON.stringify(parkingData)} 
           data={parkingData} 
-          pointToLayer={pointToLayer}
+          pointToLayer={pointToLayer} 
           onEachFeature={onEachFeature} 
         />
       )}
-      
+
+      {/* A MÁGICA DO PONTO AZUL: Só aparece se o GPS estiver ligado */}
+      {userLocation && (
+        <CircleMarker
+          center={userLocation}
+          radius={8}
+          pathOptions={{
+            fillColor: '#3b82f6', // Azul padrão de GPS
+            fillOpacity: 1,
+            color: '#ffffff', // Borda grossa branca
+            weight: 3
+          }}
+        />
+      )}
     </MapContainer>
   );
 }
