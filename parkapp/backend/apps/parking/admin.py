@@ -1,5 +1,5 @@
 from django.contrib.gis import admin
-from .models import Parking
+from .models import Parking, Booking
 
 @admin.register(Parking)
 class ParkingAdmin(admin.GISModelAdmin):
@@ -16,3 +16,9 @@ class ParkingAdmin(admin.GISModelAdmin):
     default_lon = -56.0966
     default_lat = -15.6014
     default_zoom = 12
+
+
+@admin.register(Booking)
+class BookingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'parking', 'status', 'start_time')
+    list_filter = ('status',)

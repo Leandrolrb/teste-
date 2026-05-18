@@ -1,5 +1,6 @@
 from django.contrib.gis.db import models
 from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.models import User
 
 class Parking(models.Model):
     # Opções baseadas no mock JSON
@@ -52,3 +53,27 @@ class Parking(models.Model):
 
     def __str__(self):
         return f"{self.name} - Vagas: {self.available_spots}/{self.total_capacity}"
+
+class Booking(models.Model):
+    STATUS_CHOICES = [
+        ('ACTIVE', 'Em Andamento'),
+        ('COMPLETED', 'Concluída'),
+        ('CANCELLED', 'Cancelada'),
+    ]
+
+    # Chaves Estrangeiras (Relacionamentos)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings')
+    parking = models.ForeignKey(Parking, on_delete=models.CASCADE, related_name='bookings')
+    
+    # Dados da Reserva
+    # vehicle_plate = models.CharField(max_length=10, blank=True, null=True) # Ex: ABC-1234
+    vehicle = models.CharField(max_length=100, blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ACTIVE')
+    
+    # Controle de Tempo e Valor
+    start_time = models.DateTimeField(auto_now_add=True) # Pega a hora exata da criação
+    end_time = models.DateTimeField(null=True, blank=True)
+    price_paid = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+
+    def __str__(self):
+        return f"Reserva {self.id} - {self.user.username} em {self.parking.name}"
