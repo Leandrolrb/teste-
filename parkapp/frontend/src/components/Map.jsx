@@ -47,9 +47,11 @@ export default function ParkingMap({ parkingData, onMarkerClick, center, userLoc
     <MapContainer center={[-15.6014, -56.0966]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
       <MapController center={center} />
       
-      <TileLayer
-        attribution='Tiles &copy; Esri'
-        url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+        <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        maxNativeZoom={19}
+        maxZoom={22}
       />
       {parkingData && (
         <GeoJSON 

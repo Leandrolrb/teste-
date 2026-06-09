@@ -1,20 +1,25 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Booking,Parking
-from .serializers import ParkingGeoJSONSerializer
-from .serializers import BookingSerializer
-from rest_framework import viewsets
+from rest_framework import viewsets, status # <-- Adicionado o 'status' aqui
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from django.utils import timezone
 from decimal import Decimal
+from rest_framework.permissions import IsAuthenticated
+
+from .models import Booking, Parking, Favorite, Review
+from .serializers import ParkingGeoJSONSerializer, BookingSerializer, FavoriteSerializer, ReviewSerializer
 
 class ParkingListAPIView(APIView):
+    # A busca por vagas continua aberta para qualquer um ver o mapa
+    authentication_classes = [] 
+    permission_classes = [AllowAny]
+
     def get(self, request):
         parking_lots = Parking.objects.all()
         serializer = ParkingGeoJSONSerializer(parking_lots, many=True)
         
-        # Envelopando os dados no formato de coleção
         geojson_data = {
             "type": "FeatureCollection",
             "features": serializer.data
@@ -23,43 +28,54 @@ class ParkingListAPIView(APIView):
 
 class BookingViewSet(viewsets.ModelViewSet):
     serializer_class = BookingSerializer
-    queryset = Booking.objects.all().order_by('-start_time')
+    
+    def get_queryset(self):
+        """
+        Garante que o usuário veja APENAS as suas próprias reservas.
+        Se não estiver logado (o que não deve acontecer por causa das permissões), retorna vazio.
+        """
+        if self.request.user.is_authenticated:
+            return Booking.objects.filter(user=self.request.user).order_by('-start_time')
+        return Booking.objects.none()
 
-    authentication_classes = [] 
-    permission_classes = [AllowAny]
-    # Sobrescrevendo a criação para já descontar uma vaga do estacionamento!
+    # APAGAMOS O AllowAny DAQUI! Agora o Django exige o JWT para fazer reserva.
+
     def perform_create(self, serializer):
-        # Salva a reserva
-        booking = serializer.save()
+        parking = serializer.validated_data.get('parking')
         
-        # Lógica de Negócio: Diminuir uma vaga livre no estacionamento
-        parking = booking.parking
-        if parking.available_spots > 0:
-            parking.available_spots -= 1
-            parking.save()
+        if parking.available_spots <= 0:
+            raise ValidationError({"error": "Estacionamento lotado. Nenhuma vaga disponível."})
+
+        # --- AQUI ESTÁ A MUDANÇA: Injetamos o usuário do Token! ---
+        booking = serializer.save(user=self.request.user)
+        
+        parking.available_spots -= 1
+        parking.save()
 
     @action(detail=True, methods=['post'])
     def checkout(self, request, pk=None):
         booking = self.get_object()
         
+        if booking.status == 'RESERVED' or not booking.start_time:
+            return Response(
+                {"erro": "Não é possível encerrar uma reserva que ainda não teve o check-in realizado."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         if booking.status != 'ACTIVE':
-            return Response({"error": "Esta reserva já foi finalizada."}, status=400)
+            return Response({"error": "Esta reserva já foi finalizada."}, status=status.HTTP_400_BAD_REQUEST)
             
-        # 1. Marca o fim e o status
         booking.end_time = timezone.now()
         booking.status = 'COMPLETED'
         
-        # 2. Cálculo de Preço (Exemplo: R$ 12,00/hora, mínimo 1h)
         duration = booking.end_time - booking.start_time
         hours = Decimal(duration.total_seconds() / 3600)
         
-        # Cobramos pelo menos 1 hora cheia
         billable_hours = max(Decimal('1.0'), hours)
-        booking.price_paid = round(billable_hours * Decimal('12.00'), 2)
+        booking.price_paid = round(billable_hours * booking.parking.price, 2)
         
         booking.save()
         
-        # 3. LIBERA A VAGA (A parte mais importante!)
         parking = booking.parking
         parking.available_spots += 1
         parking.save()
@@ -69,3 +85,89 @@ class BookingViewSet(viewsets.ModelViewSet):
             "total_price": booking.price_paid,
             "duration": str(duration)
         })
+
+    @action(detail=False, methods=['post'])
+    def checkin(self, request):
+        token = request.data.get('checkin_token')
+
+        if not token:
+            return Response({"erro": "Token não fornecido."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            booking = Booking.objects.get(checkin_token=token, status='RESERVED')
+
+            booking.status = 'ACTIVE'
+            booking.start_time = timezone.now()
+            booking.save()
+
+            return Response({
+                "mensagem": "Check-in realizado! A cancela abriu e o tempo está contando.",
+                "start_time": booking.start_time
+            }, status=status.HTTP_200_OK)
+
+        except Booking.DoesNotExist:
+            return Response(
+                {"erro": "Token inválido, reserva já ativada ou cancelada."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+class CheckInView(APIView):
+    def post(self, request):
+        token = request.data.get('checkin_token')
+
+        if not token:
+            return Response({"erro": "Token não fornecido."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            booking = Booking.objects.get(checkin_token=token, status='RESERVED')
+
+            booking.status = 'ACTIVE'
+            booking.start_time = timezone.now()
+            booking.save()
+
+            return Response({
+                "mensagem": "Check-in realizado! A cancela abriu e o tempo está contando.",
+                "start_time": booking.start_time
+            }, status=status.HTTP_200_OK)
+
+        except Booking.DoesNotExist:
+            return Response(
+                {"erro": "Token inválido, reserva já ativada ou cancelada."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+class FavoriteViewSet(viewsets.ModelViewSet):
+    serializer_class = FavoriteSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # O usuário só vê a própria lista de favoritos
+        return Favorite.objects.filter(user=self.request.user).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        # Injeta o usuário logado como dono do favorito
+        serializer.save(user=self.request.user)
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    serializer_class = ReviewSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Review.objects.all()
+
+    def perform_create(self, serializer):
+        booking_id = self.request.data.get('booking')
+        
+        try:
+            booking = Booking.objects.get(id=booking_id, user=self.request.user)
+            
+            # A BARREIRA: Só avalia se a reserva estiver finalizada (COMPLETED)
+            if booking.status != 'COMPLETED':
+                raise ValidationError({"error": "Você só pode avaliar um parque após encerrar a sua estadia."})
+                
+        except Booking.DoesNotExist:
+            raise ValidationError({"error": "Reserva não encontrada ou não pertence a este utilizador."})
+
+        # Salva injetando o utilizador logado e o parque daquela reserva automaticamente
+        serializer.save(user=self.request.user, parking=booking.parking)

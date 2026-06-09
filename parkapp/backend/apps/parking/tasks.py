@@ -17,6 +17,7 @@ MOCK_API_RESPONSE = {
       "capacidade_total": 120,
       "vagas_ocupadas": 85,
       "vagas_disponiveis": 35,
+      "preco_hora": 5.00, # <-- BARATINHO (UFMT)
       "status_funcionamento": "ABERTO",
       "ultima_atualizacao_sensor": "2026-04-04T10:28:15-04:00"
     },
@@ -28,6 +29,7 @@ MOCK_API_RESPONSE = {
       "capacidade_total": 45,
       "vagas_ocupadas": 42,
       "vagas_disponiveis": 3,
+      "preco_hora": 12.50, # <-- MAIS CARO (CENTRO)
       "status_funcionamento": "LOTANDO",
       "ultima_atualizacao_sensor": "2026-04-04T10:29:50-04:00"
     },
@@ -39,6 +41,7 @@ MOCK_API_RESPONSE = {
       "capacidade_total": 200,
       "vagas_ocupadas": 200,
       "vagas_disponiveis": 0,
+      "preco_hora": 15.00, # <-- SHOPPING
       "status_funcionamento": "LOTADO",
       "ultima_atualizacao_sensor": "2026-04-04T10:15:00-04:00"
     }
@@ -47,22 +50,14 @@ MOCK_API_RESPONSE = {
 
 @shared_task
 def sync_parking_availability():
-    """
-    Consome os dados da API (mock) e atualiza o banco de dados.
-    """
-    # Simulando o delay de rede de uma requisição HTTP real
     time.sleep(1) 
-    
     data = MOCK_API_RESPONSE.get("estacionamentos", [])
     
     for item in data:
-        # ATENÇÃO: No PostGIS, a ordem do Point é sempre (Longitude, Latitude)
-        # Isso é uma pegadinha clássica que quebra muitos mapas!
         lon = item["coordenadas"]["longitude"]
         lat = item["coordenadas"]["latitude"]
         point_location = Point(lon, lat, srid=4326)
         
-        # update_or_create: Cria o estacionamento se não existir, ou atualiza se já existir
         Parking.objects.update_or_create(
             integration_id=item["id_integracao"],
             defaults={
@@ -72,6 +67,7 @@ def sync_parking_availability():
                 "total_capacity": item["capacidade_total"],
                 "occupied_spots": item["vagas_ocupadas"],
                 "available_spots": item["vagas_disponiveis"],
+                "price": item.get("preco_hora", 10.00), # <-- SALVANDO O PREÇO
                 "status": item["status_funcionamento"],
                 "last_sensor_update": parse_datetime(item["ultima_atualizacao_sensor"])
             }

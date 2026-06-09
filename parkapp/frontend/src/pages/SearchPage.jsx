@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import ParkingMap from '../components/Map';
-import { Search, LocateFixed } from 'lucide-react'; 
+import { Search, LocateFixed, Car, Banknote, Navigation, ChevronLeft, Heart } from 'lucide-react'; 
 import { motion, useDragControls } from 'framer-motion';
+import api from '../services/api'; 
 
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371; 
@@ -23,19 +24,35 @@ export default function SearchPage() {
   const [userLocation, setUserLocation] = useState(null); 
 
   const [vehicleName, setVehicleName] = useState("");
+  const [userVehicles, setUserVehicles] = useState([]);
+  const [userFavorites, setUserFavorites] = useState([]); 
+  const [sortBy, setSortBy] = useState('distance'); 
 
   const [sheetPosition, setSheetPosition] = useState('mid');
   const dragControls = useDragControls();
 
   const loadParkingData = () => {
-    fetch('/api/parking/')
-      .then(response => response.json())
-      .then(data => setParkingData(data))
+    api.get('parking/')
+      .then(response => setParkingData(response.data))
       .catch(error => console.error("Erro ao buscar vagas:", error));
+  };
+
+  const loadUserVehicles = () => {
+    api.get('users/vehicles/')
+      .then(response => setUserVehicles(response.data))
+      .catch(error => console.error("Erro ao buscar veículos:", error));
+  };
+
+  const loadUserFavorites = () => {
+    api.get('parking/favorites/')
+      .then(response => setUserFavorites(response.data))
+      .catch(error => console.error("Erro ao buscar favoritos:", error));
   };
 
   useEffect(() => {
     loadParkingData();
+    loadUserVehicles();
+    loadUserFavorites(); 
   }, []);
 
   const handleGetLocation = () => {
@@ -48,7 +65,7 @@ export default function SearchPage() {
           setSearchLocation([lat, lon]); 
         },
         (error) => {
-          alert("Não foi possível acessar seu GPS. Verifique as permissões do seu navegador.");
+          alert("Não foi possível acessar seu GPS. Verifique as permissões.");
           console.error(error);
         }
       );
@@ -89,32 +106,77 @@ export default function SearchPage() {
     });
   };
 
-  const sheetVariants = { full: { y: '25%' }, mid: { y: '55%' }, min: { y: '85%' } };
+  // --- LÓGICA DE FAVORITAR ---
+  const currentParkingId = selectedParking?.id || selectedParking?.properties?.id;
+  const favoriteObj = userFavorites.find(f => f.parking === currentParkingId);
+  const isFavorite = !!favoriteObj;
+
+  const toggleFavorite = () => {
+    if (isFavorite) {
+      api.delete(`parking/favorites/${favoriteObj.id}/`).then(loadUserFavorites);
+    } else {
+      api.post('parking/favorites/', { parking: currentParkingId }).then(loadUserFavorites);
+    }
+  };
+
+  // --- NOVA FUNÇÃO DE GPS (DEEP LINK) ---
+  const handleTraceRoute = (parking) => {
+    let lat = null;
+    let lon = null;
+
+    if (parking?.geometry?.coordinates) {
+      lat = parking.geometry.coordinates[1];
+      lon = parking.geometry.coordinates[0];
+    } 
+    else if (parkingData?.features) {
+      const targetId = parking.id || parking.properties?.id;
+      const fullFeature = parkingData.features.find(f => f.id === targetId || f.properties?.id === targetId);
+      if (fullFeature?.geometry?.coordinates) {
+        lat = fullFeature.geometry.coordinates[1];
+        lon = fullFeature.geometry.coordinates[0];
+      }
+    }
+
+    if (lat && lon) {
+      // URL oficial do Google Maps para traçar rotas!
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
+      window.open(url, '_blank');
+    } else {
+      alert("Não foi possível determinar as coordenadas deste estacionamento.");
+    }
+  };
+
+  const sheetVariants = { full: { y: '20%' }, mid: { y: '55%' }, min: { y: '85%' } };
   const placeholderImage = "https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=200&q=80";
 
   let displayList = [];
   if (parkingData?.features) {
-    if (userLocation) {
-      displayList = parkingData.features.map(feature => {
-        const dist = calculateDistance(
+    let list = parkingData.features.map(feature => {
+      let dist = 9999; 
+      if (userLocation) {
+        dist = calculateDistance(
           userLocation[0], userLocation[1], 
           feature.geometry.coordinates[1], feature.geometry.coordinates[0]
         );
-        return { ...feature, distance: parseFloat(dist).toFixed(1) };
-      }).sort((a, b) => a.distance - b.distance).slice(0, 5);
-    } else {
-      displayList = parkingData.features.slice(0, 5);
+      }
+      const price = parseFloat(feature.properties?.price) || 0;
+      return { ...feature, distance: parseFloat(dist), price: price };
+    });
+
+    if (sortBy === 'distance') {
+      list = list.sort((a, b) => a.distance - b.distance);
+    } else if (sortBy === 'price') {
+      list = list.sort((a, b) => a.price - b.price);
     }
+
+    displayList = list.slice(0, 5);
   }
 
-  // A LÓGICA DE DISTÂNCIA BLINDADA
   let selectedDistance = "--";
   if (selectedParking && userLocation) {
-    // 1. Se o usuário clicou na lista, o objeto já vem com a distância calculada!
     if (selectedParking.distance) {
-      selectedDistance = selectedParking.distance;
+      selectedDistance = selectedParking.distance.toFixed(1);
     } 
-    // 2. Se o usuário clicou no pino do Mapa, calculamos agora com segurança extra
     else if (parkingData?.features) {
       const targetId = selectedParking.id || selectedParking.properties?.id;
       if (targetId !== undefined) {
@@ -132,30 +194,36 @@ export default function SearchPage() {
   }
 
   return (
-    <div style={{ height: 'calc(100vh - 70px)', width: '100%', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ height: 'calc(100vh - 70px)', width: '100%', position: 'relative', overflow: 'hidden', backgroundColor: '#f3f4f6' }}>
 
+      {/* BARRA DE PESQUISA FLUTUANTE */}
       <div style={{ position: 'absolute', top: '20px', left: '20px', right: '20px', zIndex: 1000 }}>
         <form onSubmit={handleSearch} style={{ display: 'flex', gap: '10px' }}>
           <div style={{ position: 'relative', flex: 1 }}>
-            <Search size={20} style={{ position: 'absolute', left: '15px', top: '15px', color: '#9ca3af' }} />
+            <Search size={20} style={{ position: 'absolute', left: '16px', top: '16px', color: '#64748b' }} />
             <input
               type="text"
               placeholder="Para onde você vai?"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ width: '100%', padding: '14px 20px 14px 45px', borderRadius: '16px', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', fontSize: '1rem', outline: 'none', boxSizing: 'border-box' }}
+              style={{ 
+                width: '100%', padding: '16px 20px 16px 48px', borderRadius: '100px', border: '1px solid rgba(255,255,255,0.4)', 
+                backgroundColor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(8px)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)', fontSize: '1rem', outline: 'none', boxSizing: 'border-box',
+                color: '#1e293b', fontWeight: '500'
+              }}
             />
           </div>
           <button 
             type="button" 
             onClick={handleGetLocation}
-            style={{ padding: '0 15px', backgroundColor: 'white', color: '#2563eb', border: 'none', borderRadius: '16px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            title="Usar minha localização"
+            style={{ 
+              width: '54px', height: '54px', backgroundColor: 'white', color: '#2563eb', border: 'none', borderRadius: '100px', 
+              cursor: 'pointer', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.2s'
+            }}
           >
             <LocateFixed size={22} />
-          </button>
-          <button type="submit" style={{ padding: '0 20px', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '16px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 15px rgba(37,99,235,0.2)' }}>
-            Buscar
           </button>
         </form>
       </div>
@@ -164,157 +232,270 @@ export default function SearchPage() {
         <ParkingMap 
           parkingData={parkingData} 
           center={searchLocation} 
-          userLocation={userLocation} // <-- ADICIONE ESTA LINHA!
+          userLocation={userLocation}
           onMarkerClick={(parking) => {
             setSelectedParking(parking);
             setSheetPosition('mid');
+            loadUserVehicles(); 
+            loadUserFavorites(); 
           }} 
         />
       </div>
 
+      {/* BOTTOM SHEET */}
       <motion.div
         variants={sheetVariants}
         initial="mid"
         animate={sheetPosition}
         drag="y"
-        dragElastic={0.6}
+        dragElastic={0.4}
         dragMomentum={false} 
         onDragEnd={handleDragEnd}
         dragListener={false} 
         dragControls={dragControls} 
         style={{
           position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-          backgroundColor: 'white', zIndex: 1000, borderTopLeftRadius: '24px',
-          borderTopRightRadius: '24px', boxShadow: '0 -10px 25px rgba(0,0,0,0.2)',
+          backgroundColor: '#ffffff', zIndex: 1000, borderTopLeftRadius: '32px',
+          borderTopRightRadius: '32px', boxShadow: '0 -15px 40px rgba(0,0,0,0.12)',
           display: 'flex', flexDirection: 'column'
         }}
       >
         <div 
           onPointerDown={(e) => dragControls.start(e, { snapToCursor: false })}
-          style={{ display: 'flex', justifyContent: 'center', padding: '15px 0', cursor: 'grab', touchAction: 'none' }}
+          style={{ display: 'flex', justifyContent: 'center', padding: '16px 0', cursor: 'grab', touchAction: 'none' }}
         >
-          <div style={{ width: '40px', height: '6px', backgroundColor: '#d1d5db', borderRadius: '10px' }} />
+          <div style={{ width: '48px', height: '5px', backgroundColor: '#e2e8f0', borderRadius: '10px' }} />
         </div>
 
         {selectedParking ? (
-          <div style={{ padding: '0 20px 60vh 20px', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+          /* ================= TELA DE DETALHES DA VAGA ================= */
+          <div style={{ padding: '0 24px 60vh 24px', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
             <button 
               onClick={() => setSelectedParking(null)} 
-              style={{ background: 'none', border: 'none', color: '#3b82f6', fontWeight: 'bold', marginBottom: '15px', padding: 0, cursor: 'pointer', alignSelf: 'flex-start' }}
+              style={{ 
+                background: 'none', border: 'none', color: '#64748b', fontWeight: '600', marginBottom: '20px', 
+                padding: 0, cursor: 'pointer', alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: '4px',
+                fontSize: '0.95rem'
+              }}
             >
-              ← Voltar para lista
+              <ChevronLeft size={20} /> Voltar
             </button>
             
-            <h2 style={{ margin: '0 0 5px 0', color: '#1f2937', fontSize: '1.5rem' }}>{selectedParking.name || selectedParking.properties?.name}</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+              <h2 style={{ margin: 0, color: '#0f172a', fontSize: '1.6rem', fontWeight: '800', lineHeight: '1.2', flex: 1 }}>
+                {selectedParking.name || selectedParking.properties?.name}
+              </h2>
+              <button 
+                onClick={toggleFavorite}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 0 12px', display: 'flex', alignItems: 'center' }}
+              >
+                <Heart 
+                  size={28} 
+                  color={isFavorite ? "#ef4444" : "#cbd5e1"} 
+                  fill={isFavorite ? "#ef4444" : "transparent"} 
+                  style={{ transition: 'all 0.2s' }}
+                />
+              </button>
+            </div>
             
-            <p style={{ margin: '0 0 20px 0', color: '#6b7280' }}>
-              {userLocation ? `${selectedDistance}km de distância` : "Ligue o GPS para ver a distância"} • ⭐ 4.8
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', marginBottom: '24px', fontSize: '0.95rem' }}>
+              <Navigation size={16} />
+              <span>{userLocation ? `${selectedDistance}km de distância` : "GPS Inativo"}</span>
+              <span style={{ color: '#cbd5e1' }}>•</span>
+              <span style={{ color: '#f59e0b', fontWeight: 'bold' }}>
+                ★ {selectedParking.average_rating || selectedParking.properties?.average_rating || '0.0'}
+              </span>
+            </div>
 
-            <div style={{ display: 'flex', gap: '15px', marginBottom: '25px' }}>
-              <div style={{ flex: 1, backgroundColor: '#f3f4f6', padding: '15px', borderRadius: '12px', textAlign: 'center' }}>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#6b7280' }}>Vagas Livres</p>
-                <p style={{ margin: '5px 0 0 0', fontSize: '1.5rem', fontWeight: 'bold', color: (selectedParking.available_spots || selectedParking.properties?.available_spots) > 0 ? '#10b981' : '#ef4444' }}>
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '28px' }}>
+              <div style={{ flex: 1, backgroundColor: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', marginBottom: '8px' }}>
+                  <Car size={18} />
+                  <span style={{ fontSize: '0.85rem', fontWeight: '600' }}>Vagas Livres</span>
+                </div>
+                <p style={{ margin: 0, fontSize: '1.8rem', fontWeight: '800', color: (selectedParking.available_spots || selectedParking.properties?.available_spots) > 0 ? '#10b981' : '#ef4444' }}>
                   {selectedParking.available_spots || selectedParking.properties?.available_spots}
                 </p>
               </div>
-              <div style={{ flex: 1, backgroundColor: '#eff6ff', padding: '15px', borderRadius: '12px', textAlign: 'center', border: '1px solid #bfdbfe' }}>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#3b82f6' }}>Preço/Hora</p>
-                <p style={{ margin: '5px 0 0 0', fontSize: '1.5rem', fontWeight: 'bold', color: '#1d4ed8' }}>R$ 12</p>
+
+              <div style={{ flex: 1, backgroundColor: '#eff6ff', padding: '16px', borderRadius: '16px', border: '1px solid #bfdbfe' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#3b82f6', marginBottom: '8px' }}>
+                  <Banknote size={18} />
+                  <span style={{ fontSize: '0.85rem', fontWeight: '600' }}>Preço/Hora</span>
+                </div>
+                <p style={{ margin: 0, fontSize: '1.8rem', fontWeight: '800', color: '#1d4ed8' }}>
+                  <span style={{ fontSize: '1rem', verticalAlign: 'top', marginRight: '2px' }}>R$</span>
+                  {parseFloat(selectedParking.price || selectedParking.properties?.price || 0).toFixed(2).replace('.', ',')}
+                </p>
               </div>
             </div>
 
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', color: '#6b7280', marginBottom: '5px' }}>
+            <div style={{ marginBottom: '24px', backgroundColor: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '8px' }}>
                 Qual veículo você vai estacionar?
               </label>
-              <input
-                type="text"
-                placeholder="placa ou modelo"
-                value={vehicleName}
-                onChange={(e) => setVehicleName(e.target.value)}
-                style={{ 
-                  width: '100%', padding: '12px 15px', borderRadius: '10px', 
-                  border: '1px solid #d1d5db', outline: 'none', boxSizing: 'border-box',
-                  fontSize: '1rem'
-                }}
-              />
+              
+              {userVehicles.length > 0 ? (
+                <select
+                  value={vehicleName}
+                  onChange={(e) => setVehicleName(e.target.value)}
+                  style={{ 
+                    width: '100%', padding: '14px 16px', borderRadius: '10px', 
+                    backgroundColor: 'white', border: '1px solid #cbd5e1', outline: 'none', boxSizing: 'border-box',
+                    fontSize: '1rem', color: '#1e293b'
+                  }}
+                >
+                  <option value="">-- Selecione um veículo cadastrado --</option>
+                  {userVehicles.map(v => (
+                    <option key={v.id} value={`${v.name} (${v.plate})`}>
+                      {v.name} - {v.plate}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div style={{ color: '#ef4444', fontSize: '0.9rem', fontWeight: '700', padding: '4px' }}>
+                  ⚠️ Nenhum veículo cadastrado. Vá até o seu Perfil para gerenciar sua frota antes de fazer uma reserva.
+                </div>
+              )}
             </div>
 
+            {/* --- BOTÃO DE NAVEGAÇÃO GPS EXTERNA --- */}
+            <button
+              type="button"
+              onClick={() => handleTraceRoute(selectedParking)}
+              style={{
+                width: '100%',
+                padding: '14px',
+                backgroundColor: 'white',
+                color: '#2563eb',
+                border: '2px solid #2563eb',
+                borderRadius: '16px',
+                fontSize: '1rem',
+                fontWeight: '700',
+                cursor: 'pointer',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'all 0.2s'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f0f5ff'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}
+            >
+              <Navigation size={18} />
+              Traçar Rota no GPS
+            </button>
+
             <button 
-              disabled={(selectedParking.available_spots || selectedParking.properties?.available_spots || !vehicleName) === 0}
+              disabled={(selectedParking.available_spots ?? selectedParking.properties?.available_spots) <= 0 || !vehicleName}
               onClick={() => {
-                fetch('/api/parking/bookings/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
+                api.post('parking/bookings/', {
                     parking: selectedParking.id || selectedParking.properties?.id, 
-                    user: 1, 
-                    vehicle: vehicleName, // A variável nova!
-                  })
+                    vehicle: vehicleName, 
                 })
-                .then(async response => {
-                    if (response.ok) {
-                      alert("✅ Vaga reservada com sucesso!");
-                      setSelectedParking(null);
-                      loadParkingData(); 
-                    } else {
-                      const errorData = await response.json();
-                      console.error("Erro do Servidor:", errorData);
-                      alert("❌ Erro: " + JSON.stringify(errorData));
-                    }
+                .then(response => {
+                    alert("✅ Vaga reservada com sucesso!");
+                    setSelectedParking(null);
+                    setVehicleName(""); 
+                    loadParkingData(); 
                 })
-                .catch(error => console.error("Erro na requisição:", error));
+                .catch(error => {
+                    console.error("Erro na requisição:", error);
+                    const msgErro = error.response?.data?.error || error.response?.data?.detail || "Erro ao reservar. Faça login novamente.";
+                    alert("❌ Erro: " + msgErro);
+                });
               }}
               style={{
-                width: '100%', padding: '16px', marginTop: '20px',
-                backgroundColor: (selectedParking.available_spots || selectedParking.properties?.available_spots) === 0 ? '#d1d5db' : '#2563eb',
-                color: 'white', border: 'none', borderRadius: '12px', fontSize: '1.1rem',
-                fontWeight: 'bold', cursor: (selectedParking.available_spots || selectedParking.properties?.available_spots) === 0 ? 'not-allowed' : 'pointer',
-                boxShadow: '0 4px 6px rgba(37, 99, 235, 0.2)'
+                width: '100%', padding: '18px',
+                backgroundColor: (selectedParking.available_spots ?? selectedParking.properties?.available_spots) <= 0 || !vehicleName ? '#cbd5e1' : '#2563eb',
+                color: 'white', border: 'none', borderRadius: '16px', fontSize: '1.1rem',
+                fontWeight: '700', cursor: (selectedParking.available_spots ?? selectedParking.properties?.available_spots) <= 0 || !vehicleName ? 'not-allowed' : 'pointer',
+                boxShadow: (selectedParking.available_spots ?? selectedParking.properties?.available_spots) <= 0 || !vehicleName ? 'none' : '0 10px 25px rgba(37, 99, 235, 0.3)',
+                transition: 'all 0.2s'
               }}
             >
-              {(selectedParking.available_spots || selectedParking.properties?.available_spots) === 0 ? 'Estacionamento Lotado' : 'Reservar Agora →'}
+              {(selectedParking.available_spots ?? selectedParking.properties?.available_spots) <= 0 ? 'Estacionamento Lotado' : 'Confirmar Reserva'}
             </button>
           </div>
 
         ) : (
-
+          /* ================= LISTA DE ESTACIONAMENTOS ================= */
           <>
-            <div style={{ display: 'flex', gap: '10px', padding: '0 20px 10px 20px', borderBottom: '1px solid #f3f4f6' }}>
-              <span style={{ padding: '6px 12px', backgroundColor: '#f3f4f6', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>Distance ▾</span>
-              <span style={{ padding: '6px 12px', backgroundColor: '#f3f4f6', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>Price ▾</span>
+            <div style={{ display: 'flex', gap: '12px', padding: '0 24px 16px 24px', borderBottom: '1px solid #f1f5f9' }}>
+              <button 
+                onClick={() => setSortBy('distance')}
+                style={{ 
+                  padding: '8px 16px', border: 'none', borderRadius: '100px', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer',
+                  backgroundColor: sortBy === 'distance' ? '#1e293b' : '#f1f5f9', 
+                  color: sortBy === 'distance' ? 'white' : '#64748b', transition: 'all 0.2s'
+                }}
+              >
+                Distância {sortBy === 'distance' ? '↓' : ''}
+              </button>
+              <button 
+                onClick={() => setSortBy('price')}
+                style={{ 
+                  padding: '8px 16px', border: 'none', borderRadius: '100px', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer',
+                  backgroundColor: sortBy === 'price' ? '#1e293b' : '#f1f5f9', 
+                  color: sortBy === 'price' ? 'white' : '#64748b', transition: 'all 0.2s'
+                }}
+              >
+                Preço {sortBy === 'price' ? '↓' : ''}
+              </button>
             </div>
 
-            <div style={{ flex: 1, overflowY: 'auto', padding: '0 20px 60vh 20px' }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '10px 24px 60vh 24px' }}>
               {displayList.map((feature, index) => {
                 const props = feature.properties || feature;
                 const isFull = props.available_spots === 0;
 
                 return (
-                  // A CORREÇÃO DE OURO AQUI: Passamos a feature inteira, já com a distância embutida!
-                  <div key={index} onClick={() => setSelectedParking(feature)} style={{ display: 'flex', alignItems: 'center', padding: '16px 0', borderBottom: '1px solid #f3f4f6', cursor: 'pointer' }}>
-                    <img src={placeholderImage} alt="Parking" style={{ width: '70px', height: '70px', borderRadius: '12px', objectFit: 'cover', marginRight: '16px' }} />
-                    <div style={{ flex: 1 }}>
-                      <h3 style={{ margin: '0 0 4px 0', fontSize: '1rem', color: '#1f2937' }}>{props.name}</h3>
-                      <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem', fontWeight: 'bold', color: isFull ? '#ef4444' : '#10b981' }}>
-                        {isFull ? 'Lotado' : `${props.available_spots} vagas livres`}
-                      </p>
+                  <motion.div 
+                    key={index} 
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setSelectedParking(feature)} 
+                    style={{ 
+                      display: 'flex', alignItems: 'center', padding: '16px 0', borderBottom: '1px solid #f1f5f9', 
+                      cursor: 'pointer', backgroundColor: 'transparent'
+                    }}
+                  >
+                    <div style={{ position: 'relative', marginRight: '16px' }}>
+                      <img src={placeholderImage} alt="Parking" style={{ width: '75px', height: '75px', borderRadius: '16px', objectFit: 'cover', filter: isFull ? 'grayscale(100%)' : 'none' }} />
+                      {isFull && (
+                        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <span style={{ color: 'white', fontSize: '0.7rem', fontWeight: 'bold', padding: '2px 6px', backgroundColor: '#ef4444', borderRadius: '8px' }}>LOTADO</span>
+                        </div>
+                      )}
                     </div>
-                    <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                      <span style={{ fontSize: '0.85rem', color: '#6b7280', marginBottom: '4px' }}>
-                        {feature.distance ? `${feature.distance} km` : 'GPS Inativo'}
-                      </span>
-                      <div>
-                        <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#1f2937' }}>R$8</span><span style={{ fontSize: '0.8rem', color: '#6b7280' }}>/h</span>
+                    
+                    <div style={{ flex: 1 }}>
+                      <h3 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', color: '#0f172a', fontWeight: '700' }}>{props.name}</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ 
+                          padding: '2px 8px', borderRadius: '100px', fontSize: '0.75rem', fontWeight: '700',
+                          backgroundColor: isFull ? '#fee2e2' : '#d1fae5', color: isFull ? '#ef4444' : '#10b981' 
+                        }}>
+                          {isFull ? '0 vagas' : `${props.available_spots} livres`}
+                        </span>
+                        <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '500' }}>
+                          {userLocation ? `${feature.distance.toFixed(1)} km` : ''}
+                        </span>
                       </div>
                     </div>
-                  </div>
+                    
+                    <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+                      <div style={{ color: '#0f172a' }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: '600', marginRight: '2px' }}>R$</span>
+                        <span style={{ fontSize: '1.3rem', fontWeight: '800' }}>{parseFloat(feature.price).toFixed(2).replace('.', ',')}</span>
+                      </div>
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600' }}>por hora</span>
+                    </div>
+                  </motion.div>
                 );
               })}
             </div>
           </>
-
         )}
       </motion.div>
     </div>

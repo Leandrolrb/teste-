@@ -86,7 +86,7 @@ export default function Home() {
                 </div>
                 <div style={{ backgroundColor: '#f3f4f6', padding: '10px', borderRadius: '12px' }}>
                   <p style={{ margin: 0, fontSize: '0.7rem', color: '#6b7280', textAlign: 'center' }}>Placa</p>
-                  <p style={{ margin: 0, fontWeight: 'bold', color: '#1f2937' }}>{activeBooking.vehicle_plate}</p>
+                  <p style={{ margin: 0, fontWeight: 'bold', color: '#1f2937' }}>{activeBooking.vehicle}</p>
                 </div>
               </div>
               <p style={{ margin: 0, fontSize: '0.9rem', color: '#6b7280' }}>

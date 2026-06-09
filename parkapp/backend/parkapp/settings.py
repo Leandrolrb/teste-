@@ -8,6 +8,8 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'fallback-dev-key')
 DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost').split(',')
 
+AUTH_USER_MODEL = 'users.CustomUser'
+
 # Apps
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -140,4 +142,18 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'apps.parking.tasks.sync_parking_availability',
         'schedule': crontab(minute='*/3'), # Roda a cada 3 minutos
     },
+}
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60), # O token dura 1 hora
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),    # O token de renovação dura 1 dia
+    'AUTH_HEADER_TYPES': ('Bearer',),
 }
