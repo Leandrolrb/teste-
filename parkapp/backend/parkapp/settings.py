@@ -8,6 +8,11 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'fallback-dev-key')
 DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost').split(',')
 
+# Permite que qualquer URL acesse o Django
+ALLOWED_HOSTS = ['*'] 
+
+# Permite requisições de outros domínios (evita o erro de CORS)
+CORS_ALLOW_ALL_ORIGINS = True
 AUTH_USER_MODEL = 'users.CustomUser'
 
 # Apps

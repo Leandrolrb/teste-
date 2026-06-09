@@ -23,12 +23,35 @@ class RegisterView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserProfileView(APIView):
-    # Aqui a porta é fechada: só entra quem tem token JWT válido
     permission_classes = [IsAuthenticated] 
 
     def get(self, request):
         user = request.user
         return Response({
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "phone": user.phone
+        })
+
+    # --- NOVA FUNÇÃO PARA SALVAR OS DADOS ---
+    def put(self, request):
+        user = request.user
+        
+        # Atualiza os dados básicos
+        user.first_name = request.data.get('first_name', user.first_name)
+        user.last_name = request.data.get('last_name', user.last_name)
+        user.phone = request.data.get('phone', user.phone)
+        
+        # Se o usuário digitou uma nova senha, criptografa e salva
+        new_password = request.data.get('password')
+        if new_password:
+            user.set_password(new_password)
+            
+        user.save()
+        
+        return Response({
+            "mensagem": "Perfil atualizado com sucesso!",
             "first_name": user.first_name,
             "last_name": user.last_name,
             "email": user.email,

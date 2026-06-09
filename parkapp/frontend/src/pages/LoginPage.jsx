@@ -145,11 +145,11 @@ export default function LoginPage() {
                             />
                         </div>
 
-                        <div style={{ textAlign: 'right', marginTop: '-8px' }}>
+                        {/* <div style={{ textAlign: 'right', marginTop: '-8px' }}>
                             <span style={{ fontSize: '0.85rem', color: '#3b82f6', fontWeight: '600', cursor: 'pointer' }}>
                                 Esqueceu a senha?
                             </span>
-                        </div>
+                        </div> */}
 
                         <button 
                             type="submit" 
