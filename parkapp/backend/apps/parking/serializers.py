@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from .models import Parking
-from .models import Booking
+from .models import Booking, Parking, Favorite, Review
 
 class ParkingGeoJSONSerializer(serializers.ModelSerializer):
     """
@@ -10,10 +9,11 @@ class ParkingGeoJSONSerializer(serializers.ModelSerializer):
     geometry = serializers.SerializerMethodField()
     properties = serializers.SerializerMethodField()
 
+    average_rating = serializers.ReadOnlyField()
     class Meta:
         model = Parking
         # O GeoJSON foca na estrutura de 'type', 'geometry' e 'properties'
-        fields = ['id', 'type', 'geometry', 'properties']
+        fields = ['id', 'type', 'geometry', 'properties', 'average_rating']
 
     def get_geometry(self, obj):
         return {
@@ -28,6 +28,7 @@ class ParkingGeoJSONSerializer(serializers.ModelSerializer):
             "total_capacity": obj.total_capacity,
             "occupied_spots": obj.occupied_spots,
             "available_spots": obj.available_spots,
+            "price": obj.price, # <-- ADICIONADO AQUI!
             "status": obj.status,
             "last_sensor_update": obj.last_sensor_update
         }
@@ -38,5 +39,19 @@ class BookingSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Booking
-        fields = ['id', 'user', 'parking', 'parking_name', 'vehicle', 'status', 'start_time']
-        read_only_fields = ['status', 'start_time', 'end_time', 'price_paid']
+        fields = '__all__'
+        # GARANTA que o 'status' esteja aqui dentro para o React não conseguir sobrescrever
+        read_only_fields = ['status', 'checkin_token', 'start_time', 'end_time', 'price_paid', 'user']
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    # Puxa o nome do estacionamento para mostrar na tela de Perfil
+    parking_name = serializers.CharField(source='parking.name', read_only=True)
+    
+    class Meta:
+        model = Favorite
+        fields = ['id', 'parking', 'parking_name', 'created_at']
+
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ['id', 'booking', 'rating', 'comment', 'created_at']
