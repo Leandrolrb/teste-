@@ -31,7 +31,7 @@ export default function LoginPage() {
     return (
         <div style={{ 
             minHeight: '100vh', 
-            backgroundColor: '#f3f4f6', 
+            backgroundColor: '#000000', 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center', 
@@ -39,49 +39,48 @@ export default function LoginPage() {
             fontFamily: 'sans-serif'
         }}>
             <div style={{ 
-                backgroundColor: 'white', 
+                backgroundColor: '#18181b', 
                 width: '100%', 
                 maxWidth: '400px', 
                 borderRadius: '24px', 
-                boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
                 overflow: 'hidden',
-                border: '1px solid #f1f5f9'
+                border: '1px solid #3f3f46'
             }}>
                 
                 {/* Header / Logo Area */}
                 <div style={{ 
-                    backgroundColor: '#3b82f6', 
-                    padding: '40px 20px', 
+                    padding: '40px 20px 20px', 
                     textAlign: 'center' 
                 }}>
                     <div style={{ 
                         width: '64px', 
                         height: '64px', 
-                        backgroundColor: 'white', 
+                        backgroundColor: '#ffffff', 
                         borderRadius: '16px', 
                         margin: '0 auto 16px auto', 
                         display: 'flex', 
                         alignItems: 'center', 
                         justifyContent: 'center',
-                        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                        boxShadow: '0 4px 15px rgba(255,255,255,0.1)'
                     }}>
-                        <span style={{ fontSize: '32px', fontWeight: '900', color: '#3b82f6' }}>P</span>
+                        <span style={{ fontSize: '32px', fontWeight: '900', color: '#000000' }}>P</span>
                     </div>
-                    <h1 style={{ margin: 0, fontSize: '1.8rem', fontWeight: '900', color: 'white', letterSpacing: '1px' }}>
+                    <h1 style={{ margin: 0, fontSize: '1.8rem', fontWeight: '900', color: '#ffffff', letterSpacing: '1px' }}>
                         ParkApp
                     </h1>
-                    <p style={{ margin: '8px 0 0 0', color: '#eff6ff', fontSize: '0.9rem', fontWeight: '500' }}>
+                    <p style={{ margin: '8px 0 0 0', color: '#a1a1aa', fontSize: '0.9rem', fontWeight: '500' }}>
                         Acesso rápido à sua vaga
                     </p>
                 </div>
 
                 {/* Formulário */}
-                <div style={{ padding: '32px 24px' }}>
+                <div style={{ padding: '24px' }}>
                     {erro && (
                         <div style={{ 
-                            backgroundColor: '#fef2f2', 
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)', 
                             borderLeft: '4px solid #ef4444', 
-                            color: '#b91c1c', 
+                            color: '#fca5a5', 
                             padding: '12px 16px', 
                             borderRadius: '0 8px 8px 0', 
                             marginBottom: '24px', 
@@ -94,7 +93,7 @@ export default function LoginPage() {
 
                     <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                         <div>
-                            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', color: '#0f172a', marginBottom: '8px', paddingLeft: '4px' }}>
+                            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', color: '#a1a1aa', marginBottom: '8px', paddingLeft: '4px' }}>
                                 E-mail
                             </label>
                             <input 
@@ -107,20 +106,21 @@ export default function LoginPage() {
                                     width: '100%', 
                                     boxSizing: 'border-box',
                                     padding: '14px 16px', 
-                                    backgroundColor: '#f8fafc', 
-                                    border: '1px solid #e2e8f0', 
+                                    backgroundColor: '#27272a', 
+                                    border: '1px solid #3f3f46', 
                                     borderRadius: '12px', 
                                     fontSize: '1rem',
+                                    color: '#ffffff',
                                     outline: 'none',
                                     transition: 'border-color 0.2s'
                                 }}
-                                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                                onFocus={(e) => e.target.style.borderColor = '#ffffff'}
+                                onBlur={(e) => e.target.style.borderColor = '#3f3f46'}
                             />
                         </div>
 
                         <div>
-                            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', color: '#0f172a', marginBottom: '8px', paddingLeft: '4px' }}>
+                            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', color: '#a1a1aa', marginBottom: '8px', paddingLeft: '4px' }}>
                                 Senha
                             </label>
                             <input 
@@ -133,22 +133,17 @@ export default function LoginPage() {
                                     width: '100%', 
                                     boxSizing: 'border-box',
                                     padding: '14px 16px', 
-                                    backgroundColor: '#f8fafc', 
-                                    border: '1px solid #e2e8f0', 
+                                    backgroundColor: '#27272a', 
+                                    border: '1px solid #3f3f46', 
                                     borderRadius: '12px', 
                                     fontSize: '1rem',
+                                    color: '#ffffff',
                                     outline: 'none',
                                     transition: 'border-color 0.2s'
                                 }}
-                                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                                onFocus={(e) => e.target.style.borderColor = '#ffffff'}
+                                onBlur={(e) => e.target.style.borderColor = '#3f3f46'}
                             />
-                        </div>
-
-                        <div style={{ textAlign: 'right', marginTop: '-8px' }}>
-                            <span style={{ fontSize: '0.85rem', color: '#3b82f6', fontWeight: '600', cursor: 'pointer' }}>
-                                Esqueceu a senha?
-                            </span>
                         </div>
 
                         <button 
@@ -157,19 +152,19 @@ export default function LoginPage() {
                             style={{ 
                                 width: '100%', 
                                 padding: '16px', 
-                                backgroundColor: carregando ? '#93c5fd' : '#3b82f6', 
-                                color: 'white', 
+                                backgroundColor: carregando ? '#52525b' : '#ffffff', 
+                                color: '#000000', 
                                 border: 'none', 
                                 borderRadius: '16px', 
                                 fontSize: '1.05rem', 
                                 fontWeight: '800', 
                                 cursor: carregando ? 'not-allowed' : 'pointer',
-                                boxShadow: '0 8px 20px rgba(59, 130, 246, 0.25)', 
-                                transition: 'background-color 0.2s',
+                                boxShadow: '0 4px 15px rgba(255, 255, 255, 0.1)', 
+                                transition: 'all 0.2s',
                                 marginTop: '8px'
                             }}
-                            onMouseOver={(e) => !carregando && (e.target.style.backgroundColor = '#2563eb')}
-                            onMouseOut={(e) => !carregando && (e.target.style.backgroundColor = '#3b82f6')}
+                            onMouseOver={(e) => !carregando && (e.target.style.opacity = '0.8')}
+                            onMouseOut={(e) => !carregando && (e.target.style.opacity = '1')}
                         >
                             {carregando ? 'Autenticando...' : 'Entrar'}
                         </button>
@@ -177,11 +172,11 @@ export default function LoginPage() {
 
                     {/* Footer / Cadastro */}
                     <div style={{ marginTop: '32px', textAlign: 'center' }}>
-                        <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem', fontWeight: '500' }}>
+                        <p style={{ margin: 0, color: '#a1a1aa', fontSize: '0.9rem', fontWeight: '500' }}>
                             Ainda não tem uma conta?{' '}
                             <span 
-                                onClick={() => navigate('/register')} // <-- Adicionei o onClick aqui
-                                style={{ color: '#3b82f6', fontWeight: '800', cursor: 'pointer' }}
+                                onClick={() => navigate('/register')} 
+                                style={{ color: '#ffffff', fontWeight: '800', cursor: 'pointer', textDecoration: 'underline' }}
                             >
                                 Criar agora
                             </span>

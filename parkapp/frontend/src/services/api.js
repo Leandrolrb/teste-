@@ -2,6 +2,9 @@ import axios from 'axios';
 
 const api = axios.create({
     baseURL: 'http://localhost:8000/api/', // Ajuste se a porta do seu backend for diferente
+    //ssh -R 80:localhost:5173 nokey@localhost.run
+
+    //baseURL: 'https://098fc9c03fa109.lhr.life/api/', // Ajuste se a porta do seu backend for diferente
 });
 
 // Interceptor: Antes de qualquer requisição sair do React, ele roda isso aqui

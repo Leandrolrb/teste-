@@ -7,6 +7,7 @@ from rest_framework.exceptions import ValidationError
 from django.utils import timezone
 from decimal import Decimal
 from rest_framework.permissions import IsAuthenticated
+from django.db.models import Sum, Count
 
 from .models import Booking, Parking, Favorite, Review
 from .serializers import ParkingGeoJSONSerializer, BookingSerializer, FavoriteSerializer, ReviewSerializer
@@ -171,3 +172,25 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
         # Salva injetando o utilizador logado e o parque daquela reserva automaticamente
         serializer.save(user=self.request.user, parking=booking.parking)
+
+
+class UserStatsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Busca apenas as reservas finalizadas deste usuário
+        historico = Booking.objects.filter(user=request.user, status='COMPLETED')
+        
+        # Faz a soma do campo price_paid
+        total_gasto = historico.aggregate(total=Sum('price_paid'))['total'] or 0.00
+        total_usos = historico.count()
+        
+        # Agrupa pelo nome do estacionamento e pega o que tem mais reservas
+        favorito_query = historico.values('parking__name').annotate(qtd=Count('id')).order_by('-qtd').first()
+        favorito_nome = favorito_query['parking__name'] if favorito_query else "Ainda sem histórico"
+
+        return Response({
+            "total_gasto": total_gasto,
+            "total_usos": total_usos,
+            "estacionamento_favorito": favorito_nome
+        })

@@ -106,7 +106,6 @@ export default function SearchPage() {
     });
   };
 
-  // --- LÓGICA DE FAVORITAR ---
   const currentParkingId = selectedParking?.id || selectedParking?.properties?.id;
   const favoriteObj = userFavorites.find(f => f.parking === currentParkingId);
   const isFavorite = !!favoriteObj;
@@ -119,7 +118,6 @@ export default function SearchPage() {
     }
   };
 
-  // --- NOVA FUNÇÃO DE GPS (DEEP LINK) ---
   const handleTraceRoute = (parking) => {
     let lat = null;
     let lon = null;
@@ -138,7 +136,6 @@ export default function SearchPage() {
     }
 
     if (lat && lon) {
-      // URL oficial do Google Maps para traçar rotas!
       const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
       window.open(url, '_blank');
     } else {
@@ -194,23 +191,23 @@ export default function SearchPage() {
   }
 
   return (
-    <div style={{ height: 'calc(100vh - 70px)', width: '100%', position: 'relative', overflow: 'hidden', backgroundColor: '#f3f4f6' }}>
+    <div style={{ height: 'calc(100vh - 75px)', width: '100%', position: 'relative', overflow: 'hidden', backgroundColor: '#000000' }}>
 
-      {/* BARRA DE PESQUISA FLUTUANTE */}
+      {/* BARRA DE PESQUISA FLUTUANTE (DARK) */}
       <div style={{ position: 'absolute', top: '20px', left: '20px', right: '20px', zIndex: 1000 }}>
         <form onSubmit={handleSearch} style={{ display: 'flex', gap: '10px' }}>
           <div style={{ position: 'relative', flex: 1 }}>
-            <Search size={20} style={{ position: 'absolute', left: '16px', top: '16px', color: '#64748b' }} />
+            <Search size={20} style={{ position: 'absolute', left: '16px', top: '16px', color: '#a1a1aa' }} />
             <input
               type="text"
               placeholder="Para onde você vai?"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{ 
-                width: '100%', padding: '16px 20px 16px 48px', borderRadius: '100px', border: '1px solid rgba(255,255,255,0.4)', 
-                backgroundColor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(8px)',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.08)', fontSize: '1rem', outline: 'none', boxSizing: 'border-box',
-                color: '#1e293b', fontWeight: '500'
+                width: '100%', padding: '16px 20px 16px 48px', borderRadius: '100px', border: '1px solid #3f3f46', 
+                backgroundColor: 'rgba(39, 39, 42, 0.9)', backdropFilter: 'blur(8px)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.4)', fontSize: '1rem', outline: 'none', boxSizing: 'border-box',
+                color: '#ffffff', fontWeight: '500'
               }}
             />
           </div>
@@ -218,8 +215,8 @@ export default function SearchPage() {
             type="button" 
             onClick={handleGetLocation}
             style={{ 
-              width: '54px', height: '54px', backgroundColor: 'white', color: '#2563eb', border: 'none', borderRadius: '100px', 
-              cursor: 'pointer', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: '54px', height: '54px', backgroundColor: '#27272a', color: '#ffffff', border: '1px solid #3f3f46', borderRadius: '100px', 
+              cursor: 'pointer', boxShadow: '0 4px 20px rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'all 0.2s'
             }}
           >
@@ -242,7 +239,7 @@ export default function SearchPage() {
         />
       </div>
 
-      {/* BOTTOM SHEET */}
+      {/* BOTTOM SHEET (DARK UBER STYLE) */}
       <motion.div
         variants={sheetVariants}
         initial="mid"
@@ -255,16 +252,16 @@ export default function SearchPage() {
         dragControls={dragControls} 
         style={{
           position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-          backgroundColor: '#ffffff', zIndex: 1000, borderTopLeftRadius: '32px',
-          borderTopRightRadius: '32px', boxShadow: '0 -15px 40px rgba(0,0,0,0.12)',
-          display: 'flex', flexDirection: 'column'
+          backgroundColor: '#18181b', zIndex: 1000, borderTopLeftRadius: '32px',
+          borderTopRightRadius: '32px', borderTop: '1px solid #3f3f46', boxShadow: '0 -15px 40px rgba(0,0,0,0.5)',
+          display: 'flex', flexDirection: 'column', color: '#f4f4f5'
         }}
       >
         <div 
           onPointerDown={(e) => dragControls.start(e, { snapToCursor: false })}
           style={{ display: 'flex', justifyContent: 'center', padding: '16px 0', cursor: 'grab', touchAction: 'none' }}
         >
-          <div style={{ width: '48px', height: '5px', backgroundColor: '#e2e8f0', borderRadius: '10px' }} />
+          <div style={{ width: '48px', height: '5px', backgroundColor: '#3f3f46', borderRadius: '10px' }} />
         </div>
 
         {selectedParking ? (
@@ -273,7 +270,7 @@ export default function SearchPage() {
             <button 
               onClick={() => setSelectedParking(null)} 
               style={{ 
-                background: 'none', border: 'none', color: '#64748b', fontWeight: '600', marginBottom: '20px', 
+                background: 'none', border: 'none', color: '#a1a1aa', fontWeight: '600', marginBottom: '20px', 
                 padding: 0, cursor: 'pointer', alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: '4px',
                 fontSize: '0.95rem'
               }}
@@ -282,7 +279,7 @@ export default function SearchPage() {
             </button>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-              <h2 style={{ margin: 0, color: '#0f172a', fontSize: '1.6rem', fontWeight: '800', lineHeight: '1.2', flex: 1 }}>
+              <h2 style={{ margin: 0, color: '#ffffff', fontSize: '1.6rem', fontWeight: '800', lineHeight: '1.2', flex: 1 }}>
                 {selectedParking.name || selectedParking.properties?.name}
               </h2>
               <button 
@@ -291,47 +288,47 @@ export default function SearchPage() {
               >
                 <Heart 
                   size={28} 
-                  color={isFavorite ? "#ef4444" : "#cbd5e1"} 
+                  color={isFavorite ? "#ef4444" : "#52525b"} 
                   fill={isFavorite ? "#ef4444" : "transparent"} 
                   style={{ transition: 'all 0.2s' }}
                 />
               </button>
             </div>
             
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', marginBottom: '24px', fontSize: '0.95rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#a1a1aa', marginBottom: '24px', fontSize: '0.95rem' }}>
               <Navigation size={16} />
               <span>{userLocation ? `${selectedDistance}km de distância` : "GPS Inativo"}</span>
-              <span style={{ color: '#cbd5e1' }}>•</span>
-              <span style={{ color: '#f59e0b', fontWeight: 'bold' }}>
+              <span style={{ color: '#3f3f46' }}>•</span>
+              <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>
                 ★ {selectedParking.average_rating || selectedParking.properties?.average_rating || '0.0'}
               </span>
             </div>
 
             <div style={{ display: 'flex', gap: '12px', marginBottom: '28px' }}>
-              <div style={{ flex: 1, backgroundColor: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', marginBottom: '8px' }}>
+              <div style={{ flex: 1, backgroundColor: '#27272a', padding: '16px', borderRadius: '16px', border: '1px solid #3f3f46' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#a1a1aa', marginBottom: '8px' }}>
                   <Car size={18} />
                   <span style={{ fontSize: '0.85rem', fontWeight: '600' }}>Vagas Livres</span>
                 </div>
-                <p style={{ margin: 0, fontSize: '1.8rem', fontWeight: '800', color: (selectedParking.available_spots || selectedParking.properties?.available_spots) > 0 ? '#10b981' : '#ef4444' }}>
+                <p style={{ margin: 0, fontSize: '1.8rem', fontWeight: '800', color: (selectedParking.available_spots || selectedParking.properties?.available_spots) > 0 ? '#34d399' : '#ef4444' }}>
                   {selectedParking.available_spots || selectedParking.properties?.available_spots}
                 </p>
               </div>
 
-              <div style={{ flex: 1, backgroundColor: '#eff6ff', padding: '16px', borderRadius: '16px', border: '1px solid #bfdbfe' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#3b82f6', marginBottom: '8px' }}>
+              <div style={{ flex: 1, backgroundColor: '#27272a', padding: '16px', borderRadius: '16px', border: '1px solid #3f3f46' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#a1a1aa', marginBottom: '8px' }}>
                   <Banknote size={18} />
                   <span style={{ fontSize: '0.85rem', fontWeight: '600' }}>Preço/Hora</span>
                 </div>
-                <p style={{ margin: 0, fontSize: '1.8rem', fontWeight: '800', color: '#1d4ed8' }}>
-                  <span style={{ fontSize: '1rem', verticalAlign: 'top', marginRight: '2px' }}>R$</span>
+                <p style={{ margin: 0, fontSize: '1.8rem', fontWeight: '800', color: '#ffffff' }}>
+                  <span style={{ fontSize: '1rem', verticalAlign: 'top', marginRight: '2px', color: '#a1a1aa' }}>R$</span>
                   {parseFloat(selectedParking.price || selectedParking.properties?.price || 0).toFixed(2).replace('.', ',')}
                 </p>
               </div>
             </div>
 
-            <div style={{ marginBottom: '24px', backgroundColor: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '8px' }}>
+            <div style={{ marginBottom: '24px', backgroundColor: '#27272a', padding: '16px', borderRadius: '16px', border: '1px solid #3f3f46' }}>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#a1a1aa', marginBottom: '8px' }}>
                 Qual veículo você vai estacionar?
               </label>
               
@@ -341,11 +338,11 @@ export default function SearchPage() {
                   onChange={(e) => setVehicleName(e.target.value)}
                   style={{ 
                     width: '100%', padding: '14px 16px', borderRadius: '10px', 
-                    backgroundColor: 'white', border: '1px solid #cbd5e1', outline: 'none', boxSizing: 'border-box',
-                    fontSize: '1rem', color: '#1e293b'
+                    backgroundColor: '#18181b', border: '1px solid #3f3f46', outline: 'none', boxSizing: 'border-box',
+                    fontSize: '1rem', color: '#ffffff'
                   }}
                 >
-                  <option value="">-- Selecione um veículo cadastrado --</option>
+                  <option value="">-- Selecione um veículo --</option>
                   {userVehicles.map(v => (
                     <option key={v.id} value={`${v.name} (${v.plate})`}>
                       {v.name} - {v.plate}
@@ -354,39 +351,26 @@ export default function SearchPage() {
                 </select>
               ) : (
                 <div style={{ color: '#ef4444', fontSize: '0.9rem', fontWeight: '700', padding: '4px' }}>
-                  ⚠️ Nenhum veículo cadastrado. Vá até o seu Perfil para gerenciar sua frota antes de fazer uma reserva.
+                  ⚠️ Nenhum veículo cadastrado. Vá até o seu Perfil para gerenciar.
                 </div>
               )}
             </div>
 
-            {/* --- BOTÃO DE NAVEGAÇÃO GPS EXTERNA --- */}
+            {/* BOTÃO DE ROTA GPS */}
             <button
               type="button"
               onClick={() => handleTraceRoute(selectedParking)}
               style={{
-                width: '100%',
-                padding: '14px',
-                backgroundColor: 'white',
-                color: '#2563eb',
-                border: '2px solid #2563eb',
-                borderRadius: '16px',
-                fontSize: '1rem',
-                fontWeight: '700',
-                cursor: 'pointer',
-                marginBottom: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                transition: 'all 0.2s'
+                width: '100%', padding: '14px', backgroundColor: '#27272a', color: '#ffffff', border: '1px solid #3f3f46',
+                borderRadius: '16px', fontSize: '1rem', fontWeight: '700', cursor: 'pointer', marginBottom: '12px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s'
               }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f0f5ff'}
-              onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}
             >
               <Navigation size={18} />
               Traçar Rota no GPS
             </button>
 
+            {/* SUPER BOTÃO DE RESERVA */}
             <button 
               disabled={(selectedParking.available_spots ?? selectedParking.properties?.available_spots) <= 0 || !vehicleName}
               onClick={() => {
@@ -408,10 +392,10 @@ export default function SearchPage() {
               }}
               style={{
                 width: '100%', padding: '18px',
-                backgroundColor: (selectedParking.available_spots ?? selectedParking.properties?.available_spots) <= 0 || !vehicleName ? '#cbd5e1' : '#2563eb',
-                color: 'white', border: 'none', borderRadius: '16px', fontSize: '1.1rem',
-                fontWeight: '700', cursor: (selectedParking.available_spots ?? selectedParking.properties?.available_spots) <= 0 || !vehicleName ? 'not-allowed' : 'pointer',
-                boxShadow: (selectedParking.available_spots ?? selectedParking.properties?.available_spots) <= 0 || !vehicleName ? 'none' : '0 10px 25px rgba(37, 99, 235, 0.3)',
+                backgroundColor: (selectedParking.available_spots ?? selectedParking.properties?.available_spots) <= 0 || !vehicleName ? '#27272a' : '#ffffff',
+                color: (selectedParking.available_spots ?? selectedParking.properties?.available_spots) <= 0 || !vehicleName ? '#52525b' : '#000000', 
+                border: 'none', borderRadius: '16px', fontSize: '1.1rem',
+                fontWeight: '800', cursor: (selectedParking.available_spots ?? selectedParking.properties?.available_spots) <= 0 || !vehicleName ? 'not-allowed' : 'pointer',
                 transition: 'all 0.2s'
               }}
             >
@@ -422,13 +406,13 @@ export default function SearchPage() {
         ) : (
           /* ================= LISTA DE ESTACIONAMENTOS ================= */
           <>
-            <div style={{ display: 'flex', gap: '12px', padding: '0 24px 16px 24px', borderBottom: '1px solid #f1f5f9' }}>
+            <div style={{ display: 'flex', gap: '12px', padding: '0 24px 16px 24px', borderBottom: '1px solid #27272a' }}>
               <button 
                 onClick={() => setSortBy('distance')}
                 style={{ 
                   padding: '8px 16px', border: 'none', borderRadius: '100px', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer',
-                  backgroundColor: sortBy === 'distance' ? '#1e293b' : '#f1f5f9', 
-                  color: sortBy === 'distance' ? 'white' : '#64748b', transition: 'all 0.2s'
+                  backgroundColor: sortBy === 'distance' ? '#ffffff' : '#27272a', 
+                  color: sortBy === 'distance' ? '#000000' : '#a1a1aa', transition: 'all 0.2s'
                 }}
               >
                 Distância {sortBy === 'distance' ? '↓' : ''}
@@ -437,8 +421,8 @@ export default function SearchPage() {
                 onClick={() => setSortBy('price')}
                 style={{ 
                   padding: '8px 16px', border: 'none', borderRadius: '100px', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer',
-                  backgroundColor: sortBy === 'price' ? '#1e293b' : '#f1f5f9', 
-                  color: sortBy === 'price' ? 'white' : '#64748b', transition: 'all 0.2s'
+                  backgroundColor: sortBy === 'price' ? '#ffffff' : '#27272a', 
+                  color: sortBy === 'price' ? '#000000' : '#a1a1aa', transition: 'all 0.2s'
                 }}
               >
                 Preço {sortBy === 'price' ? '↓' : ''}
@@ -456,40 +440,40 @@ export default function SearchPage() {
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setSelectedParking(feature)} 
                     style={{ 
-                      display: 'flex', alignItems: 'center', padding: '16px 0', borderBottom: '1px solid #f1f5f9', 
+                      display: 'flex', alignItems: 'center', padding: '16px 0', borderBottom: '1px solid #27272a', 
                       cursor: 'pointer', backgroundColor: 'transparent'
                     }}
                   >
                     <div style={{ position: 'relative', marginRight: '16px' }}>
-                      <img src={placeholderImage} alt="Parking" style={{ width: '75px', height: '75px', borderRadius: '16px', objectFit: 'cover', filter: isFull ? 'grayscale(100%)' : 'none' }} />
+                      <img src={placeholderImage} alt="Parking" style={{ width: '75px', height: '75px', borderRadius: '16px', objectFit: 'cover', filter: isFull ? 'grayscale(100%) opacity(0.5)' : 'none' }} />
                       {isFull && (
-                        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <span style={{ color: 'white', fontSize: '0.7rem', fontWeight: 'bold', padding: '2px 6px', backgroundColor: '#ef4444', borderRadius: '8px' }}>LOTADO</span>
+                        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <span style={{ color: '#ffffff', fontSize: '0.7rem', fontWeight: 'bold', padding: '4px 8px', backgroundColor: '#ef4444', borderRadius: '8px' }}>LOTADO</span>
                         </div>
                       )}
                     </div>
                     
                     <div style={{ flex: 1 }}>
-                      <h3 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', color: '#0f172a', fontWeight: '700' }}>{props.name}</h3>
+                      <h3 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', color: '#ffffff', fontWeight: '700' }}>{props.name}</h3>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ 
-                          padding: '2px 8px', borderRadius: '100px', fontSize: '0.75rem', fontWeight: '700',
-                          backgroundColor: isFull ? '#fee2e2' : '#d1fae5', color: isFull ? '#ef4444' : '#10b981' 
+                          padding: '4px 8px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: '700',
+                          backgroundColor: isFull ? '#7f1d1d' : '#064e3b', color: isFull ? '#fca5a5' : '#34d399' 
                         }}>
                           {isFull ? '0 vagas' : `${props.available_spots} livres`}
                         </span>
-                        <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '500' }}>
+                        <span style={{ fontSize: '0.8rem', color: '#a1a1aa', fontWeight: '500' }}>
                           {userLocation ? `${feature.distance.toFixed(1)} km` : ''}
                         </span>
                       </div>
                     </div>
                     
                     <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
-                      <div style={{ color: '#0f172a' }}>
-                        <span style={{ fontSize: '0.85rem', fontWeight: '600', marginRight: '2px' }}>R$</span>
+                      <div style={{ color: '#ffffff' }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: '600', marginRight: '2px', color: '#a1a1aa' }}>R$</span>
                         <span style={{ fontSize: '1.3rem', fontWeight: '800' }}>{parseFloat(feature.price).toFixed(2).replace('.', ',')}</span>
                       </div>
-                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600' }}>por hora</span>
+                      <span style={{ fontSize: '0.75rem', color: '#52525b', fontWeight: '600' }}>por hora</span>
                     </div>
                   </motion.div>
                 );

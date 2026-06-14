@@ -1,8 +1,10 @@
 import time
+from django.utils import timezone
+from datetime import timedelta
 from celery import shared_task
 from django.contrib.gis.geos import Point
 from django.utils.dateparse import parse_datetime
-from .models import Parking
+from .models import Parking, Booking
 
 # Simulação da resposta de uma API externa
 MOCK_API_RESPONSE = {
@@ -74,3 +76,23 @@ def sync_parking_availability():
         )
         
     return f"{len(data)} estacionamentos processados com sucesso!"
+
+
+@shared_task
+def cancel_abandoned_bookings():
+    # Define o limite de tempo (vamos manter 1 minuto para o seu teste agora)
+    time_limit = timezone.now() - timedelta(minutes=30)
+    
+    # Agora a matemática funciona: procura por reservas "A Caminho" criadas antes do limite
+    abandoned_bookings = Booking.objects.filter(
+        status='RESERVED', 
+        created_at__lt=time_limit
+    )
+    
+    count = abandoned_bookings.count()
+    
+    if count > 0:
+        abandoned_bookings.update(status='CANCELLED')
+        return f"{count} reservas canceladas por abandono."
+    
+    return "Nenhuma reserva abandonada encontrada."
