@@ -33,7 +33,7 @@ services:
       retries: 5
 
   # =============================================
-  # BACKEND - Django REST API
+  # BACKEND - Django REST API\
   # =============================================
   backend:
     build:
@@ -76,7 +76,8 @@ services:
       dockerfile: Dockerfile
     container_name: parkapp_celery
     env_file: .env
-    command: celery -A parkapp worker -l info
+    # TROQUE command POR entrypoint AQUI:
+    entrypoint: celery -A parkapp worker -l info
     volumes:
       - ./backend:/app
     depends_on:
@@ -85,7 +86,7 @@ services:
       redis:
         condition: service_healthy
 
-# =============================================
+  # =============================================
   # SCHEDULER - Celery Beat (Agendador de tarefas)
   # =============================================
   celery-beat:
@@ -94,7 +95,8 @@ services:
       dockerfile: Dockerfile
     container_name: parkapp_celery_beat
     env_file: .env
-    command: celery -A parkapp beat -l info
+    # TROQUE command POR entrypoint AQUI TAMBÉM:
+    entrypoint: celery -A parkapp beat -l info
     volumes:
       - ./backend:/app
     depends_on:

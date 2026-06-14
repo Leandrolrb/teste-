@@ -143,13 +143,22 @@ from celery.schedules import crontab
 
 # Configuração do Celery Beat (Agendador de Tarefas)
 CELERY_BEAT_SCHEDULE = {
-    'update-parking-data-every-5-minutes': {
-        'task': 'apps.parking.tasks.sync_parking_availability',
-        'schedule': crontab(minute='*/3'), # Roda a cada 3 minutos
+    # 'update-parking-data-every-5-minutes': {
+    #     'task': 'apps.parking.tasks.sync_parking_availability',
+    #     'schedule': crontab(minute='*/3'), # Roda a cada 3 minutos
+    # },
+
+    'cancel-abandoned-bookings': {
+        'task': 'apps.parking.tasks.cancel_abandoned_bookings',
+        'schedule': crontab(minute='*/5'), # Roda a cada 5 minutos
     },
 }
 
+CELERY_TIMEZONE = 'America/Cuiaba' # Ou o mesmo timezone que estiver no seu TIME_ZONE principal
+CELERY_ENABLE_UTC = False
 
+CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',

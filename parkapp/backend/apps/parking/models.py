@@ -98,7 +98,8 @@ class Booking(models.Model):
     start_time = models.DateTimeField(null=True, blank=True) 
     end_time = models.DateTimeField(null=True, blank=True)
     price_paid = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
-
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    spot_note = models.CharField('Local da Vaga', max_length=255, blank=True, null=True)
     def save(self, *args, **kwargs):
         if not self.checkin_token:
             # Gera um token no formato PRK-A1B2C3

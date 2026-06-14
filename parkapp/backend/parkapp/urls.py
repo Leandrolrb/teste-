@@ -6,6 +6,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
+
 # A linha 4 (from .views import BookingViewSet) foi apagada!
 
 def api_root(request):
@@ -27,4 +28,5 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
     path('api/users/', include('apps.users.urls')),
+    
 ]

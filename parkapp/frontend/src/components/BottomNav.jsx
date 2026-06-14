@@ -1,15 +1,14 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Search, ReceiptText, User } from 'lucide-react'; // Importando os ícones profissionais
+import { Home, Search, ReceiptText, User } from 'lucide-react';
 
 export default function BottomNav() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Trocamos a string do emoji pela referência do componente do ícone
   const menuItems = [
     { label: 'Home', path: '/', icon: Home },
     { label: 'Search', path: '/search', icon: Search },
-    { label: 'Bookings', path: '/bookings', icon: ReceiptText }, // Ícone de recibo/ticket para reservas
+    { label: 'Bookings', path: '/bookings', icon: ReceiptText }, 
     { label: 'Profile', path: '/profile', icon: User },
   ];
 
@@ -18,18 +17,19 @@ export default function BottomNav() {
       position: 'fixed',
       bottom: 0,
       width: '100%',
-      height: '70px',
-      backgroundColor: 'white',
+      height: '75px', // Um pouquinho mais alto para ficar elegante no touch
+      backgroundColor: '#18181b', // Mesmo fundo principal da Home
       display: 'flex',
       justifyContent: 'space-around',
       alignItems: 'center',
-      borderTop: '1px solid #eee',
+      borderTop: '1px solid #27272a', // Borda sutil escura
       zIndex: 2000,
-      boxShadow: '0 -4px 12px rgba(0,0,0,0.03)' // Sombra um pouco mais suave
+      boxShadow: '0 -4px 20px rgba(0,0,0,0.4)', // Sombra escura para não misturar com o conteúdo
+      paddingBottom: '5px' // Pequeno respiro inferior
     }}>
       {menuItems.map((item) => {
         const isActive = location.pathname === item.path;
-        const IconComponent = item.icon; // Instanciando o ícone dinamicamente
+        const IconComponent = item.icon; 
         
         return (
           <div 
@@ -40,19 +40,19 @@ export default function BottomNav() {
               flexDirection: 'column',
               alignItems: 'center',
               cursor: 'pointer',
-              color: isActive ? '#2563eb' : '#9ca3af', // Azul profissional ou cinza
-              transition: 'all 0.2s ease-in-out'
+              color: isActive ? '#ffffff' : '#52525b', // Branco puro quando ativo, Cinza escuro inativo
+              transition: 'all 0.2s ease-in-out',
+              padding: '8px'
             }}
           >
-            {/* O ícone fica ligeiramente mais grosso se estiver na aba ativa */}
             <IconComponent 
               size={24} 
               strokeWidth={isActive ? 2.5 : 2} 
             />
             <span style={{ 
               fontSize: '0.70rem', 
-              fontWeight: isActive ? '600' : '400',
-              marginTop: '4px' // Espaçinho entre o ícone e o texto
+              fontWeight: isActive ? '700' : '500',
+              marginTop: '4px' 
             }}>
               {item.label}
             </span>

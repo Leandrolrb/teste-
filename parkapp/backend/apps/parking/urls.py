@@ -3,6 +3,8 @@ from rest_framework.routers import DefaultRouter
 from .views import ParkingListAPIView, BookingViewSet, FavoriteViewSet, CheckInView, ReviewViewSet
 from django.urls import path
 from .views import CheckInView
+from .views import UserStatsView
+
 # 1. Criamos o "Roteador Automático" para os ViewSets
 router = DefaultRouter()
 router.register(r'bookings', BookingViewSet, basename='booking')
@@ -16,5 +18,6 @@ urlpatterns = [
     path('', include(router.urls)),
 
     path('bookings/checkin/', CheckInView.as_view(), name='booking-checkin'),
+    path('stats/', UserStatsView.as_view(), name='user-stats'),
     
 ]
